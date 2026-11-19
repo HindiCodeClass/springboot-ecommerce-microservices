@@ -50,8 +50,10 @@ public class Payment {
 	@Column(unique = true, nullable = false)
 		private String transactionId;
 		private String gatewayPaymentId;
+		private String gatewayOrderId;
 		private LocalDateTime createdAt;
 		private LocalDateTime updatedAt;
+		private String sagaId;
 		
 		@PrePersist
 		void onCreate() {

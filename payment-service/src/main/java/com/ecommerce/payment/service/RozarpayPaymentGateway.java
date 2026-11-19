@@ -11,9 +11,11 @@ import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RozarpayPaymentGateway implements PaymentGateway{
 
 	private final RazorpayClient razorpayClient;
@@ -34,8 +36,11 @@ public class RozarpayPaymentGateway implements PaymentGateway{
 					order.get("status"),
 					"RAZORPAY");
 		} catch (RazorpayException e) {
-			// TODO: handle exception
-			throw new IllegalStateException("RazorpayOrder Create failed");
+			 log.error("Razorpay order creation failed", e);
+
+			    throw new IllegalStateException(
+			            "Razorpay order creation failed: " + e.getMessage(), e
+			    );
 		}
 	}
 }

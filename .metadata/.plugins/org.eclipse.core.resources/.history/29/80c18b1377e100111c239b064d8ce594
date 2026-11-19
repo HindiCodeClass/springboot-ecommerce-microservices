@@ -1,0 +1,4 @@
+eureka.client.enabled=false
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+spring.kafka.listener.auto-startup=false

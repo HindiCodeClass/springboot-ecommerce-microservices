@@ -20,6 +20,7 @@ public class ProductMapper {
 					.categoryId(
 							product.getCategory() != null ?product.getCategory().getId() : null
 							)
+					.categoryName(product.getCategory() != null ?product.getCategory().getName() : null)
 					.build();
 		}
 		public Product toEntity(ProductDto dto, Category category) {

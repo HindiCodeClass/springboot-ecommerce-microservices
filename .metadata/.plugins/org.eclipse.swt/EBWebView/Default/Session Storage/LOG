@@ -1,3 +1,2 @@
-2026/01/22-10:34:58.488 1cec Reusing MANIFEST C:\Users\user\Desktop\ecommerce-microservices\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Session Storage/MANIFEST-000001
-2026/01/22-10:34:58.492 1cec Recovering log #3
-2026/01/22-10:34:58.500 1cec Reusing old log C:\Users\user\Desktop\ecommerce-microservices\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Session Storage/000003.log 
+2026/11/16-07:36:02.504 1310 Creating DB C:\Users\user\Desktop\ecommerce-microservices\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Session Storage since it was missing.
+2026/11/16-07:36:02.543 1310 Reusing MANIFEST C:\Users\user\Desktop\ecommerce-microservices\.metadata\.plugins\org.eclipse.swt\EBWebView\Default\Session Storage/MANIFEST-000001

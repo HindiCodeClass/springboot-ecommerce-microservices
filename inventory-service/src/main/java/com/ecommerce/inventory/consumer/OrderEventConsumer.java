@@ -11,9 +11,9 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class OrderEventConsumer {
-		private final InventoryService inventoryService;
+	//	private final InventoryService inventoryService;
 		@KafkaListener(topics = "order-event", groupId = "inventory-group")
 		public void consume(OrderPlacedEvent event) {
-			inventoryService.updateStock(event);
+		//	inventoryService.updateStock(event);
 		}
 }

@@ -5,10 +5,14 @@ spring:
       group-id: inventory-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
-        spring.json.trusted.packages: "*"
-
+        "[spring.deserializer.value.delegate.class]": "org.springframework.kafka.support.serializer.JsonDeserializer"
+        "[spring.json.trusted.packages]": "*"
+        "[spring.json.type.mapping]": "com.ecommerce.order.event.OrderPlacedEvent:com.ecommerce.inventory.event.OrderPlacedEvent"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   datasource:
     url: jdbc:mysql://localhost:3306/inventory_db
     username: root
@@ -18,3 +22,8 @@ spring:
     hibernate:
       ddl-auto: update
       show-sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      connect-timeout: 2s

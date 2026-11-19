@@ -2,7 +2,10 @@
 <section name="Workbench">
 	<item key="hasShownOverlayPopupBefore" value="true"/>
 	<section name="java.lang.Class">
+		<item key="selection" value="orderEventProducer"/>
 		<list key="findhistory">
+			<item value="OrderEventProducer"/>
+			<item value="orderEventProducer"/>
 		</list>
 	</section>
 </section>

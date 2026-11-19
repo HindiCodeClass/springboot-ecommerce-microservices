@@ -11,13 +11,13 @@ public class InventoryMapper {
 		public Inventory toEntity(InventoryRequest request) {
 		Inventory inventory = new Inventory();
 		inventory.setSkuCode(request.getSkuCode());
-		inventory.setQuantity(request.getQuantity());
+		inventory.setAvailableQuantity(request.getQuantity());
 		return inventory;
 		}
 		public InventoryResponse toresponse(Inventory inventory) {
 			return new InventoryResponse(
 					inventory.getSkuCode(),
-					inventory.getQuantity()>0,
-					inventory.getQuantity());
+					inventory.getAvailableQuantity()>0,
+					inventory.getAvailableQuantity());
 		}
 }

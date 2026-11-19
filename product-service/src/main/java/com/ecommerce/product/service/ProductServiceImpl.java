@@ -8,15 +8,19 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.ecommerce.product.controller.ImageServeController;
+import com.ecommerce.product.dto.CursorPageResponse;
 import com.ecommerce.product.dto.ProductDto;
 import com.ecommerce.product.entity.Category;
 import com.ecommerce.product.entity.Product;
+import com.ecommerce.product.event.ProductEventPublisher;
 import com.ecommerce.product.mapper.ProductMapper;
 import com.ecommerce.product.repository.ProductRepository;
 
@@ -26,9 +30,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService{
 
+    private final ImageServeController imageServeController;
+
 		private final ProductRepository productRepo;
+		private final ProductEventPublisher productEventPublisher;
 		private final ProductMapper productMapper;
 		private final String uploadDir = System.getProperty("user.dir")+"/uploads/products/";
+
 
 	@Override
 	public ProductDto createProduct(ProductDto dto) {
@@ -39,6 +47,8 @@ public class ProductServiceImpl implements ProductService{
 		}
 		Product product =  productMapper.toEntity(dto, category);
 		Product saved =  productRepo.save(product);
+		ProductDto response = productMapper.toDto(saved);
+		productEventPublisher.publishProductCreated(response.getId());
 		
 		return productMapper.toDto(saved);
 	}
@@ -55,16 +65,20 @@ public class ProductServiceImpl implements ProductService{
 			category.setId(dto.getCategoryId());
 			product.setCategory(category);
 		}
-		return productMapper.toDto(productRepo.save(product));
+		Product saved = productRepo.save(product);
+		ProductDto response = productMapper.toDto(saved);
+		productEventPublisher.publishProductUpdated(response.getId());
+		return response;
 	}
 
 	@Override
 	public void deleteProduct(Long id) {
 		productRepo.deleteById(id);
-		
+		productEventPublisher.publishProductDeleted(id);
 	}
 
 	@Override
+	@Cacheable(value = "productCache", key = "#id")
 	public ProductDto getProductById(Long id) {
 		Product p = productRepo.findById(id).orElseThrow(() -> new RuntimeException("product not found"));
 		return productMapper.toDto(p);
@@ -74,7 +88,8 @@ public class ProductServiceImpl implements ProductService{
 	public Page<ProductDto> getAllProduct(int page, int size, String sortBy, String sortDir) {
 		Sort sort = sortDir.equalsIgnoreCase("asc")? Sort.by(sortBy).ascending(): Sort.by(sortBy).descending();
 		Pageable pageable = PageRequest.of(page, size, sort);
-		Page<Product> productPage =  productRepo.findAll(pageable);
+		//Page<Product> productPage =  productRepo.findAll(pageable);
+		Page<Product> productPage =  productRepo.findAllWithCategory(pageable);
 		return productPage.map(productMapper::toDto);
 	}
 
@@ -137,6 +152,26 @@ public class ProductServiceImpl implements ProductService{
 		
 		
 		return productMapper.toDto(product);
+	}
+
+	@Override
+	public CursorPageResponse<ProductDto> getProductByCursor(Long cursor, int size) {
+	Pageable pageable = PageRequest.of(0, size+1);
+	List<Product> products = productRepo.findProductsByCursor(cursor, pageable);
+	boolean hasNext = products.size()> size;
+	if(hasNext) {
+		products.remove(size);
+		
+	}
+	List<ProductDto> dtoList = products.stream().map(productMapper::toDto).toList();
+	Long nextCursor = null;
+	if(!products.isEmpty()) {
+		nextCursor = products.get(products.size()-1).getId();
+	}
+	return CursorPageResponse.<ProductDto>builder()
+			.content(dtoList)
+			.nextCursor(hasNext ? nextCursor : null)
+			.hasNext(hasNext).build();
 	}
 
 }

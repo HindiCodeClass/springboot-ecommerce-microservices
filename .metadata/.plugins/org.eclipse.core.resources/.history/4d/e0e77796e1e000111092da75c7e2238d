@@ -1,0 +1,66 @@
+package com.ecommerce.inventory.service;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ecommerce.inventory.Mapper.InventoryMapper;
+import com.ecommerce.inventory.dto.InventoryRequest;
+import com.ecommerce.inventory.dto.InventoryResponse;
+import com.ecommerce.inventory.entity.Inventory;
+import com.ecommerce.inventory.entity.InventoryReservation;
+import com.ecommerce.inventory.entity.ReservationStatus;
+import com.ecommerce.inventory.exception.InventoryNotFoundException;
+import com.ecommerce.inventory.repository.InventoryRepository;
+import com.ecommerce.inventory.repository.ReservationRepository;
+
+import lombok.RequiredArgsConstructor;
+@Service
+@RequiredArgsConstructor
+public class InventoryReservationTxService {
+
+
+	private final InventoryRepository inventoryRepo;
+	private final InventoryMapper inventoryMapper;
+	private final ReservationRepository reservationRepo;
+
+
+	public InventoryResponse checkInventory(String skuCode) {
+		Inventory inventory =  inventoryRepo.findBySkuCode(skuCode).orElseThrow(()-> new InventoryNotFoundException(skuCode));
+	return inventoryMapper.toresponse(inventory);
+	}
+	public void addInventory(InventoryRequest request) {
+		Inventory inventory = inventoryMapper.toEntity(request);
+		inventoryRepo.save(inventory);
+	}
+
+	
+	@Transactional
+	public void reserve(String orderId, String skuCode, Integer quantity) {
+		Optional<InventoryReservation> existing = reservationRepo.findByOrderId(orderId);
+		if(existing.isPresent()) {
+			if(existing.get().getStatus() == ReservationStatus.RESERVED) {
+				return;
+			}
+			throw new IllegalStateException("Reservation already completed"+ orderId);
+		}
+		Inventory inventory = inventoryRepo.findBySkuCode(skuCode).orElseThrow(()-> new RuntimeException("Inventory not found"));
+		if(inventory.getAvailableQuantity()<quantity) {
+			throw new RuntimeException("Insufficient stock for "+ skuCode);
+		}
+		inventory.setAvailableQuantity(inventory.getAvailableQuantity() - quantity);
+		inventory.setReserveQuantity(inventory.getReserveQuantity() + quantity);
+		inventoryRepo.save(inventory);
+		InventoryReservation reservation = InventoryReservation.builder()
+				.orderId(orderId)
+				.skuCode(skuCode)
+				.quantity(quantity)
+				.status(ReservationStatus.RESERVED)
+				.createdAt(LocalDateTime.now())
+				.updatedAt(LocalDateTime.now()).build();
+		reservationRepo.save(reservation);
+	}
+	
+}

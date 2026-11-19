@@ -1,2 +1,0 @@
-spring.application.name=product-service
-server.port=8085

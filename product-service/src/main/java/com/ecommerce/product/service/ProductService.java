@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ecommerce.product.dto.CursorPageResponse;
 import com.ecommerce.product.dto.ProductDto;
 
 public interface ProductService {
@@ -18,4 +19,5 @@ public interface ProductService {
 		Page<ProductDto> searchProduct(String keyword, int page,int size);
 		Page<ProductDto> filterProducts(Long categoryId,Double minPrice, Double maxPrice, int page, int size);
 		Page<ProductDto> advanceFilter(String keyword, Long categoryId, Double minPrice, Double maxPrice, int page, int size, String sortBy, String sortDir);
+		CursorPageResponse<ProductDto> getProductByCursor(Long cursor, int size);
 }

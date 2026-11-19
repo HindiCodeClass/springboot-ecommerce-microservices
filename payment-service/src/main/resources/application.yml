@@ -1,7 +1,7 @@
 razorpay:
-  key: rzp_test_xxxx
-  secret: xxxxx
-  webhook-secret: xxxxxx
+  key: rzp_test_Ts5H3NNiOsD7Y1
+  secret: gePxCqiLk3cjlQLgcM4UW0ks
+  webhook-secret: MyEcommerceRazorpayWebhookSecret2026
   
 spring:
   datasource:
@@ -11,3 +11,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

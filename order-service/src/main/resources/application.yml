@@ -4,6 +4,14 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      properties:
+        "[enable.idempotence]": true
+        "[max.in.flight.requests.per.connection]": 5
+        reties: 10
+        "[delivery.timeout.ms]": 120000
+        "[request.timeout.ms]": 30000
+        "[compression.type]": lz4
       
   datasource:
     url: jdbc:mysql://localhost:3306/order_db

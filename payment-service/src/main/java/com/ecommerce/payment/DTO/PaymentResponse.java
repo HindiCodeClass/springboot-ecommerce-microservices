@@ -21,4 +21,5 @@ public class PaymentResponse {
 		private BigDecimal amount;
 		private PaymentStatus paymentStatus;
 		private String transactionId;
+	    private String gatewayOrderId;
 }

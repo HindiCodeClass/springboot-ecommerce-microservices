@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ecommerce.product.dto.CursorPageResponse;
 import com.ecommerce.product.dto.ProductDto;
 import com.ecommerce.product.service.ProductService;
 
@@ -59,6 +60,10 @@ public class ProductController {
 		@PostMapping("/{id}/upload-image")
 		public ResponseEntity<ProductDto> uploadImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) throws IOException{
 			return ResponseEntity.ok(productService.uploadImage(id, file));
+		}
+		@GetMapping("/cursor")
+		public ResponseEntity<CursorPageResponse<ProductDto>> getProductByCursor(@RequestParam(required = false) Long cursor, @RequestParam(defaultValue = "10") int size){
+			return ResponseEntity.ok(productService.getProductByCursor(cursor, size));
 		}
 }
 

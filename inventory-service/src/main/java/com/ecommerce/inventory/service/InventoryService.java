@@ -1,30 +1,33 @@
 package com.ecommerce.inventory.service;
 
-import java.time.LocalDateTime;
-
-import javax.management.RuntimeErrorException;
-
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.inventory.Mapper.InventoryMapper;
 import com.ecommerce.inventory.dto.InventoryRequest;
 import com.ecommerce.inventory.dto.InventoryResponse;
 import com.ecommerce.inventory.entity.Inventory;
-import com.ecommerce.inventory.entity.ProcessedOrder;
-import com.ecommerce.inventory.event.OrderPlacedEvent;
+import com.ecommerce.inventory.entity.InventoryReservation;
+import com.ecommerce.inventory.entity.ReservationStatus;
 import com.ecommerce.inventory.exception.InventoryNotFoundException;
+import com.ecommerce.inventory.lock.RedisDistributedLock;
 import com.ecommerce.inventory.repository.InventoryRepository;
-import com.ecommerce.inventory.repository.ProcessedOrderRepository;
+import com.ecommerce.inventory.repository.ReservationRepository;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryService {
+
+
 		private final InventoryRepository inventoryRepo;
-		private final ProcessedOrderRepository processedOrderRepo;
 		private final InventoryMapper inventoryMapper;
+		private final ReservationRepository reservationRepo;
+		private final RedisDistributedLock redisLock;
+		private final InventoryReservationTxService reservationTxService;
+
+  
 		public InventoryResponse checkInventory(String skuCode) {
 			Inventory inventory =  inventoryRepo.findBySkuCode(skuCode).orElseThrow(()-> new InventoryNotFoundException(skuCode));
 		return inventoryMapper.toresponse(inventory);
@@ -33,25 +36,50 @@ public class InventoryService {
 			Inventory inventory = inventoryMapper.toEntity(request);
 			inventoryRepo.save(inventory);
 		}
+
+		
+		public void reserve(String orderId, String skuCode, Integer quantity) {
+			String lockKey = "inventory:lock"+skuCode;
+			String token = redisLock.acquireLock(lockKey);
+			try {
+				reservationTxService.reserve(orderId, skuCode, quantity);
+			} finally {
+				redisLock.releaseLock(lockKey, token);
+			}
+		}
 		@Transactional
-		public void updateStock(OrderPlacedEvent event) {
-			if(processedOrderRepo.existsByOrderId(event.getOrderId())) {
+		public void commit(String orderId) {
+			InventoryReservation reservation = reservationRepo.findByOrderIdForUpdate(orderId).orElseThrow();
+			if(reservation.getStatus() ==ReservationStatus.COMMITTED) {
 				return;
 			}
-			Inventory inventory =  inventoryRepo.findBySkuCode(event.getSkuCode()).orElseThrow(()-> new InventoryNotFoundException(event.getSkuCode()));
-		Integer availableQuantity =inventory.getQuantity();
-		Integer orderedQuantity = event.getQuantity();
-		if(availableQuantity<orderedQuantity) {
-			throw new RuntimeException("Insufficient stock for this skuCode");
+			if(reservation.getStatus() == ReservationStatus.RELEASED) {
+				throw new IllegalStateException("Reservation Already Released");
+				
+			}
+			Inventory inventory = inventoryRepo.findBySkuCodeForUpdate(reservation.getSkuCode()).orElseThrow(() -> new InventoryNotFoundException(reservation.getSkuCode()));
+			inventory.setReserveQuantity(inventory.getReserveQuantity()-reservation.getQuantity());;
+			inventoryRepo.save(inventory);
+			reservation.setStatus(ReservationStatus.COMMITTED);
+			reservationRepo.save(reservation);
 			
 		}
-		inventory.setQuantity(availableQuantity-orderedQuantity);
-		inventoryRepo.save(inventory);
-		ProcessedOrder processed = new ProcessedOrder();
-		processed.setOrderId(event.getOrderId());
-		processed.setProcessedAt(LocalDateTime.now());
-		processedOrderRepo.save(processed);
-		}
+		@Transactional
+		public void release(String orderId) {
+			InventoryReservation reservation = reservationRepo.findByOrderIdForUpdate(orderId).orElseThrow();
+			if(reservation.getStatus() == ReservationStatus.RELEASED) {
+				return;
+			}
+			if(reservation.getStatus() == ReservationStatus.COMMITTED) {
+				throw new IllegalStateException("can not release committed reservation");
+			}
+			Inventory inventory = inventoryRepo.findBySkuCodeForUpdate(reservation.getSkuCode()).orElseThrow();
+			inventory.setAvailableQuantity(inventory.getAvailableQuantity() + reservation.getQuantity());
+			inventory.setReserveQuantity(inventory.getReserveQuantity() - reservation.getQuantity());
+			inventoryRepo.save(inventory);
+			reservation.setStatus(ReservationStatus.RELEASED);
+			reservationRepo.save(reservation);
+			}
 }
 
 

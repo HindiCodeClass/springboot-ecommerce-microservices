@@ -71,7 +71,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered{
 			    ),
 			    "USER", Map.of(
 			        "GET", List.of("/api/products", "/api/categories", "/api/inventory", "/api/payments"),
-			        "POST", List.of("/api/categories", "/api/products", "/api/order", "/api/payment")
+			        "POST", List.of("/api/categories", "/api/products", "/api/order", "/api/payments")
 			    )
 			);
 		private boolean isAuthorized(String role, String path, String method) {

@@ -1,0 +1,7 @@
+eureka.client.enabled=false
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+spring.kafka.listener.auto-startup=false
+spring.jpa.show-sql=true
+spring.data.redis.host=localhost
+spring.data.redis.port=6379

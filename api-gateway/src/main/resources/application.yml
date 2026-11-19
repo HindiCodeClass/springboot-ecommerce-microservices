@@ -31,11 +31,18 @@ spring:
             - Path=/api/inventory/**
           filters:
             - CustomRouteFilter
+            
+        - id: PAYMENT-SERVICE
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/payments/**,/api/payment/**
+          filters:
+            - CustomRouteFilter
 
         - id: ORDER-SERVICE
           uri: lb://ORDER-SERVICE
           predicates:
-            - Path=/api/orders/**
+            - Path=/api/orders/**,/api/order/**
           filters:
             - CustomRouteFilter
 eureka:

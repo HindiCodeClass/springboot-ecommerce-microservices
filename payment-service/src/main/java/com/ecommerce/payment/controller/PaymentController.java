@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ecommerce.payment.DTO.CreatePaymentRequest;
 import com.ecommerce.payment.DTO.PaymentResponse;
 import com.ecommerce.payment.DTO.PaymentStatusUpdateRequest;
 import com.ecommerce.payment.DTO.RequestPayment;
@@ -39,6 +40,10 @@ public class PaymentController {
 		public ResponseEntity<PaymentResponse> updatedStatus(@PathVariable("paymentId") Long paymentId, @RequestBody @Valid PaymentStatusUpdateRequest request){
 			PaymentResponse response  =paymentService.updatePaymentStatus(paymentId, request);
 			return ResponseEntity.ok(response);
+		}
+		@PostMapping("/saga")
+		public ResponseEntity<PaymentResponse> createSagaPayment(@RequestBody CreatePaymentRequest request){
+			return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.createSagaPayment(request));
 		}
 }
 
